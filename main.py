@@ -43,7 +43,8 @@ def is_have_target_diff(commit: Commit, filename: str) -> bool:
 
 
 def iterate_repository(repo: Repository) -> list[Commit]:
-    commits = set()
+    commits: set[Commit] = set()
+    moshpit: set[Commit] = set()
     for branch_name in tqdm(list(repo.branches), position=0, ncols=80, desc="scanning branches"):
         branch = repo.branches.get(branch_name)
         oid = branch.target
@@ -51,9 +52,13 @@ def iterate_repository(repo: Repository) -> list[Commit]:
             continue
         global commits_count
         for commit in tqdm(repo.walk(oid, SortMode.TIME), position=1, ncols=80, leave=False, desc=branch_name):
+            if commit in commits | moshpit:
+                continue
             commits_count += 1
-            if commit not in commits and is_have_target_diff(commit, FILENAME):
+            if is_have_target_diff(commit, FILENAME):
                 commits.add(commit)
+            else:
+                moshpit.add(commit)
     return list(commits)
 
 
