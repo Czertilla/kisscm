@@ -64,20 +64,21 @@ def iterate_repository(repo: Repository) -> list[Commit]:
 
 def find_parents(commit: Commit, commits: list[Commit]) -> tuple[list[Commit], list[bool]]:
     i = 0
+    if str(commit.id).startswith("008733c"):
+        i = 0
     result: list[Commit] = [] + commit.parents
-    parent_print = []
+    parent_print = [False for _ in result]
     while not (set(result) <= set(commits)):
-        parent_print += [False for _ in range(
-            max(0, len(result) - len(parent_print)))]
         parent = result[i]
         if parent not in commits:
-            parent_print[i] = False
+            parent_print.pop(i)
             result.pop(i)
             if len(parent.parent_ids) == 2:
                 i = i
             result += parent.parents
+            parent_print += [False for _ in result]
         else:
-            parent_print[i] = True
+            parent_print[i] = parent.id in commit.parent_ids
             i = (i + 1) % len(result)
     return list(set(result)), parent_print
 
@@ -88,7 +89,7 @@ nodes: dict[str, Node] = {
     commit.id:
     Node(
         str(commit.id),
-        content=f"{str(commit.id)[:6]}..\n{commit.author.name}\n{datetime.fromtimestamp(commit.commit_time)}\n"
+        content=f"{str(commit.id)[:7]}..\n{commit.author.name}\n{datetime.fromtimestamp(commit.commit_time)}\n"
     ) for commit in tqdm(commits, ncols=80, desc="making nodes")
 }
 links = []
@@ -103,14 +104,15 @@ for commit in tqdm(commits, ncols=80, position=0, desc="making links"):
 
 def render(graph):
     graphbytes = graph.encode("utf8")
+    
+    with open("backup.graph", "w") as file:
+        file.write(graph)
     base64_bytes = base64.urlsafe_b64encode(graphbytes)
     base64_string = base64_bytes.decode("ascii")
     try:
         img_data = requests.get(RENDER_PATH + base64_string).content
     except:
         print("no connection, graph will save in file backup.graph")
-        with open("backup.graph", "w") as file:
-            file.write(graph)
         return
     with open('result.jpg', 'wb') as handler:
         handler.write(img_data)
