@@ -1,5 +1,8 @@
 import re
 import copy
+import json
+import sys
+
 
 class Parser:
     SEP = r"[ ;]+(?=(?:[^\$]*\$[^\$]*\$)*[^\$]*$)(?=(?:[^\']*\'[^\']*\')*[^\']*$)"
@@ -8,24 +11,39 @@ class Parser:
     def __init__(self) -> None:
         self.backup = None
         self.variables = {}
-        self.current_dict = None
+        self.current_dict = {}
         self.dict_stack = []
         self.buffer: list[str] = []
         self.end_dict_flag = False
+        self.done = False
 
-    def dump(self):
-        print(self.current_dict)
-        print(self.variables)
+    def remove_ellipsis(self, target=None, stack: list[dict] = []) -> None:
+        if target is None:
+            target = self.current_dict
+        for k, v in target.items():
+            if isinstance(v, dict):
+                if v in stack:
+                    target.update({k: f"Ellipsis:{v}"})
+                    print("FOKIN ELLIPSIS")
+                else:
+                    self.remove_ellipsis(v, stack + [v])
+
+    def dump(self, filepath: str):
+        self.remove_ellipsis()
+        with open(filepath, 'w') as f:
+            print(self.current_dict)
+            json.dump(self.current_dict, f, indent=4, check_circular=False)
 
     def error(self, line: str, message: str):
-        print(f"{line}: {message}")
+        print(f"\u001B[31m{line}: {message}\u001B[0m")
         self.reverte_from_backup()
 
     def reverte_from_backup(self):
-        self.variables = self.backup.variables
-        self.current_dict = self.backup.current_dict
-        self.dict_stack = self.backup.dict_stack
-        self.buffer = self.backup.buffer
+        if isinstance(self.backup, Parser):
+            self.variables = self.backup.variables
+            self.current_dict = self.backup.current_dict
+            self.dict_stack = self.backup.dict_stack
+            self.buffer = self.backup.buffer
 
     def validate_name(self, name: str) -> bool:
         if not re.fullmatch(self.NAME_RE, name):
@@ -51,17 +69,19 @@ class Parser:
                 return self.error(line, ") expected")
             arg = line[4:-1]
             if re.fullmatch(self.NAME_RE, arg):
-                arg = self.get_value(arg, line)
-                if arg is None:
+                value = self.get_value(arg, line)
+                if value is None:
                     return
             else:
                 value = self.parse_value(arg)
                 if value is None:
                     return
             if isinstance(value, str):
+                if len(value) != 1:
+                    return self.error(line, "ord can use only for 1-char string")
                 return ord(value)
             return self.error(line, "ord() argument can be only string")
-        signature = line.split()
+        signature: list[str] = re.split(self.SEP, line)
         stack = []
         for i, I in enumerate(signature[::-1]):
             if I in "+-*":
@@ -95,7 +115,7 @@ class Parser:
         return stack[-1]
             
 
-    def parse_value(self, value: str) -> str|None:
+    def parse_value(self, value: str) -> str|float|int|None:
         if value.startswith("'") != value.endswith("'"):
             return self.error(value, "symbol ' missed - unclosed string")
         if value.startswith("'"):
@@ -105,7 +125,10 @@ class Parser:
         elif value.isnumeric():
             value = int(value)
         else:
-            value = float(value)
+            try:
+                value = float(value)
+            except:
+                return self.error(value, "symbols ' missed - value is not a number")
         return value
 
     def parse_line(self, line: str):
@@ -137,13 +160,29 @@ class Parser:
                     return self.error(expression, "symbol '$' missed - unclosed expression")
                 if expression.startswith("$"):
                     value = self.parse_expression(expression[1:-1])
-                    if value is None:
-                        return
+                elif expression.startswith("@{"):
+                    const_parser = Parser()
+                    const_parser.variables.update(self.variables)
+                    const_parser.parse_line(" ".join(self.buffer[i+3:]))
+                    self.buffer = []
+                    while not const_parser.done:
+                        const_parser.parse_line(
+                            input(
+                                '\t'*(len(self.dict_stack)-self.end_dict_flag+
+                                len(const_parser.dict_stack)-const_parser.end_dict_flag)
+                            )
+                        )
+                    value = const_parser.current_dict
                 else:
                     value = self.parse_value(expression)
+                if value is None:
+                    return
                 self.variables.update({var_name: value})
-                for j in range(i, i+4):
-                    self.buffer[j] = ""
+                if self.buffer:
+                    for j in range(i, i+4):
+                        self.buffer[j] = ""
+                else:
+                    break
             elif I == "=":
                 if i < 1:
                     return self.error(I, "unexpected '=' symbol")
@@ -166,12 +205,18 @@ class Parser:
             elif I == "}":
                 self.dict_stack.pop(-1)
                 if not self.dict_stack:
-                    self.dump()
-                    exit()
+                    self.done = True
+                    return
                 self.current_dict = self.dict_stack[-1]
 
 parser = Parser()
 
 if __name__ == "__main__":
-    while True:
+    try:
+        filepath = sys.argv[1]
+    except IndexError:
+        parser.error("argument error", "expected filepath argument, but nothing given")
+        exit()
+    while not parser.done:
         parser.parse_line(input('\t'*(len(parser.dict_stack)-parser.end_dict_flag)))
+    parser.dump(filepath)
