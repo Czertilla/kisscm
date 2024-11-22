@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<log>
+  <log>
+    <instruction>90 947 207</instruction>
+    <binary>5ab303000000000000cf00000000000000</binary>
+  </log>
+  <log>
+    <instruction>1 822 918 42</instruction>
+    <binary>01360300000000000096030000000000002a</binary>
+  </log>
+  <log>
+    <instruction>62 135 464</instruction>
+    <binary>3e8700000000000000d001000000000000</binary>
+  </log>
+  <log>
+    <instruction>137 920 37 301</instruction>
+    <binary>899803000000000000252d01000000000000</binary>
+  </log>
+</log>
