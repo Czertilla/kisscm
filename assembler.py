@@ -8,18 +8,17 @@ def assemble_instruction(line):
     b = int(fields[1])
     c = int(fields[2])
     d = int(fields[3]) if len(fields) > 3 else 0
-    e = int(fields[4]) if len(fields) > 4 else 0
 
     # Упаковка команды в 14 байт
-    if command == 26:  # Загрузка константы
+    if command == 90:  # Загрузка константы
         return struct.pack('<B Q Q', command, b, c)
      #то команда, а два следующих значения (Q) — это два операнда в формате "беззнаковое 8-байтовое целое").
-    elif command == 4:  # Чтение значения из памяти
+    elif command == 1:  # Чтение значения из памяти
         return struct.pack('<B Q Q B', command, b, c, d) #упаковывается в 17 байт (<B Q Q B — это означает команду и три операнда).
-    elif command == 27:  # Запись значения в память
+    elif command == 62:  # Запись значения в память
         return struct.pack('<B Q Q', command, b, c)
     elif command == 137:  # Унарная операция sqrt()
-        return struct.pack('<B Q B Q', command, b, c, d, e)
+        return struct.pack('<B Q B Q', command, b, c, d)
     else:
         raise ValueError(f"Unknown command: {command}")
 
