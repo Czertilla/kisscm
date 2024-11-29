@@ -142,7 +142,7 @@ class Emulator (ZipFile):
             return self.invalid_command()
         
         path = self.get_path(target_path)
-        
+
         s = 0
         for i in range(path.count('/')+1):
             s = path.find('/', s) + 1
@@ -220,4 +220,3 @@ if __name__ == '__main__':
         exit(1)
     with Emulator(target, mode="a") as emulator:
         emulator.polling()
-        logger.info(emulator.namelist())
