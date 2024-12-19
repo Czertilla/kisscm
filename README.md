@@ -29,7 +29,7 @@
 pip install -r requirements.txt
 ```
 
-3. Настройте `файл config.json в корневой папке проекта`
+3. Настройте `файл config.json` в корневой папке проекта
 4. запустите программу
 
 ```
@@ -78,4 +78,4 @@ python.exe main.py
 
 ## Тестирование
 
-![результат тестирования](https://gitlab.com/kisscm/homework/-/raw/hw1/image.png)
+![результат тестирования](https://github.com/kisscm/homework/-/raw/hw1/image.png "Результат тестирования")
