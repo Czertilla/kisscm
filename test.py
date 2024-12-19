@@ -23,7 +23,7 @@ def test_parse_line():
         }
     }
     parser.parse_line("@{")
-    parser.parse_line("let D = $* A 123;")
+    parser.parse_line("let D = $* A 123$;")
     parser.parse_line("DA = D;")
     parser.parse_line("ASD = '1232';")
     parser.parse_line("ASD = 'dublicate key';")
@@ -35,7 +35,3 @@ def test_parse_line():
             "S": 246
         }
     }
-    
-def test_isupper():
-    assert 'FOO'.isupper()
-    
