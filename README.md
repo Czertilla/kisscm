@@ -83,4 +83,4 @@ python.exe main.py result.json
 
 ## Тестирование
 
-![1734616778262](image/README/1734616778262.png)
+![Результат тестирования](test.png)
