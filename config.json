@@ -1,6 +1,5 @@
 {
-    
-"REPO_PATH": ".git",
-"FILENAME": "Main.java",
-"RENDER_PATH": "https://mermaid.ink/img/"
+    "REPO_PATH": ".git",
+    "FILENAME": "main.py",
+    "RENDER_PATH": "https://mermaid.ink/img/"
 }
